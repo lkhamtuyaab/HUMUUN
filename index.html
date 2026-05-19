@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no"/>
+<title>HUMUUN ILC — AR</title>
+<script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+/* ─── RESET ─── */
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#000;overflow:hidden;font-family:'Montserrat',sans-serif;}
+
+/* ─── CANVAS (birds + trail) ─── */
+#cv{position:fixed;inset:0;z-index:700;pointer-events:none;}
+
+/* ─── CONFETTI ─── */
+#cf{position:fixed;inset:0;z-index:690;pointer-events:none;overflow:hidden;}
+.cfp{position:absolute;animation:cfFall linear forwards;}
+@keyframes cfFall{0%{transform:translateY(-10px) rotate(0);opacity:1;}100%{transform:translateY(110vh) rotate(540deg);opacity:0;}}
+.bst{position:absolute;border-radius:50%;animation:bOut ease-out forwards;}
+@keyframes bOut{0%{transform:translate(0,0) scale(1);opacity:1;}100%{transform:translate(var(--x),var(--y)) scale(0);opacity:0;}}
+
+/* ─── SCAN ─── */
+#scan{
+  position:fixed;inset:0;z-index:500;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,rgba(4,1,18,.96),rgba(0,0,8,.8));
+  transition:opacity .7s;
+}
+#scan.off{opacity:0;pointer-events:none;}
+.sl{font-size:30px;font-weight:900;letter-spacing:8px;color:#fff;margin-bottom:4px;
+  text-shadow:0 0 36px rgba(56,189,248,1);}
+.ss{font-size:9px;color:#7dd3fc;letter-spacing:3px;text-transform:uppercase;margin-bottom:28px;}
+.sb{width:180px;height:126px;position:relative;margin-bottom:16px;}
+.sb::before,.sb::after,.sb span::before,.sb span::after{content:'';position:absolute;width:26px;height:26px;}
+.sb::before{top:0;left:0;border-top:2px solid #38bdf8;border-left:2px solid #38bdf8;border-radius:3px 0 0 0;}
+.sb::after{top:0;right:0;border-top:2px solid #38bdf8;border-right:2px solid #38bdf8;border-radius:0 3px 0 0;}
+.sb span::before{bottom:0;left:0;border-bottom:2px solid #38bdf8;border-left:2px solid #38bdf8;border-radius:0 0 0 3px;}
+.sb span::after{bottom:0;right:0;border-bottom:2px solid #38bdf8;border-right:2px solid #38bdf8;border-radius:0 0 3px 0;}
+.sl2{position:absolute;left:6px;right:6px;height:1.5px;
+  background:linear-gradient(90deg,transparent,#38bdf8,transparent);
+  animation:sw 1.8s ease-in-out infinite;}
+@keyframes sw{0%,100%{top:0;opacity:1;}50%{top:100%;opacity:.3;}}
+.sh{font-size:9px;letter-spacing:3px;color:#bae6fd;opacity:.6;text-transform:uppercase;}
+
+/* ─── MAIN OVERLAY ─── */
+#ov{
+  position:fixed;inset:0;z-index:400;
+  pointer-events:none;opacity:0;transition:opacity .4s;
+  /* Max width container — centered */
+  display:flex;flex-direction:column;align-items:center;
+}
+#ov.on{opacity:1;pointer-events:all;}
+
+/* Inner container max-width for desktop */
+.ov-inner{
+  width:100%;max-width:560px;height:100%;
+  position:relative;
+  /* CSS 3D for gyroscope */
+  transform-style:preserve-3d;
+  transition:transform .1s linear;
+}
+
+/* ─── TOP HEADER ─── */
+#hdr{
+  position:absolute;top:0;left:0;right:0;
+  display:flex;flex-direction:column;align-items:center;
+  padding:10px 16px 0;
+}
+.org{display:flex;gap:1px;filter:drop-shadow(0 0 14px rgba(56,189,248,.9));}
+.lt{
+  font-size:clamp(22px,6.5vw,38px);font-weight:900;color:#fff;letter-spacing:3px;
+  opacity:0;transform:translateY(24px) rotateX(70deg);
+  transition:opacity .4s,transform .5s cubic-bezier(.22,1,.36,1);
+}
+.lt.on{opacity:1;transform:translateY(0) rotateX(0);}
+.sub{
+  font-size:10px;font-weight:700;letter-spacing:2.5px;color:#38bdf8;
+  text-transform:uppercase;margin-top:4px;
+  opacity:0;transform:translateY(8px);transition:opacity .4s,transform .4s;
+}
+.sub.on{opacity:1;transform:translateY(0);}
+.dvd{width:0;height:2px;margin-top:7px;
+  background:linear-gradient(90deg,transparent,#38bdf8,#818cf8,transparent);
+  transition:width .6s;}
+.dvd.on{width:clamp(100px,30vw,150px);}
+
+/* Stats + badges row */
+.srow{
+  display:flex;align-items:center;gap:0;margin-top:8px;
+  opacity:0;transform:translateY(8px);transition:opacity .4s,transform .4s;
+}
+.srow.on{opacity:1;transform:translateY(0);}
+.bwrap{position:relative;width:44px;height:44px;flex-shrink:0;}
+.br{position:absolute;inset:-3px;border-radius:50%;
+  border:1.5px solid transparent;animation:spin 7s linear infinite;}
+.br1{border-top-color:#38bdf8;border-right-color:rgba(56,189,248,.15);}
+.br2{inset:-6px;animation-duration:4.5s;animation-direction:reverse;
+  border-right-color:#7dd3fc;border-top-color:transparent;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.bdg{position:absolute;inset:0;border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .3s;}
+.bdg.on{opacity:1;}
+.b5{background:linear-gradient(135deg,#0369a1,#0ea5e9);
+  box-shadow:0 0 14px rgba(14,165,233,.6);}
+.b7{background:linear-gradient(135deg,#4f46e5,#818cf8);
+  box-shadow:0 0 14px rgba(99,102,241,.6);}
+.bn{font-size:15px;font-weight:900;color:#fff;line-height:1;}
+.bt{font-size:5px;letter-spacing:.5px;color:#e0f2fe;font-weight:700;text-align:center;line-height:1.3;}
+.smid{display:flex;gap:0;padding:0 8px;}
+.st{display:flex;flex-direction:column;align-items:center;padding:0 10px;
+  border-right:1px solid rgba(56,189,248,.25);}
+.st:last-child{border-right:none;}
+.sn{font-size:clamp(15px,4.5vw,19px);font-weight:900;color:#38bdf8;}
+.sl3{font-size:7.5px;letter-spacing:1px;color:#bae6fd;opacity:.85;margin-top:1px;font-weight:700;}
+
+/* ─── RIGHT NAV BUTTONS ─── */
+#nav{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:10px;
+  opacity:0;transition:opacity .4s;
+}
+#nav.on{opacity:1;}
+.nb{
+  display:flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,rgba(14,165,233,.15),rgba(99,102,241,.15));
+  border:1.5px solid rgba(56,189,248,.35);
+  border-radius:14px;padding:10px 14px;
+  cursor:pointer;min-width:92px;
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  transition:transform .15s,box-shadow .15s,border-color .2s;
+  font-family:'Montserrat',sans-serif;
+}
+.nb:active{transform:scale(.93);}
+.nb.act{border-color:#38bdf8;box-shadow:0 0 18px rgba(56,189,248,.4);}
+.ni{width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:16px;}
+.ia{background:linear-gradient(135deg,#0369a1,#38bdf8);}
+.it{background:linear-gradient(135deg,#4f46e5,#818cf8);}
+.ic{background:linear-gradient(135deg,#be123c,#fb7185);}
+.nt{font-size:11px;font-weight:800;color:#e0f2fe;letter-spacing:.5px;text-transform:uppercase;}
+
+/* ─── GLASS PANEL (slides from poster area) ─── */
+#panel{
+  position:absolute;
+  /* Starts from left (behind poster), slides right */
+  left:-100%;top:0;bottom:0;
+  width:58%;
+  background:rgba(4,2,16,.92);
+  border-right:1.5px solid rgba(56,189,248,.25);
+  backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
+  transition:left .45s cubic-bezier(.34,1.1,.64,1);
+  overflow:hidden;
+  display:flex;flex-direction:column;
+}
+#panel.open{left:0;}
+
+/* Glass panel inner */
+.p-top{
+  padding:50px 16px 14px;
+  border-bottom:1px solid rgba(56,189,248,.15);
+  flex-shrink:0;
+}
+.p-title{font-size:18px;font-weight:900;color:#fff;letter-spacing:.5px;}
+.p-sub{font-size:9px;letter-spacing:2px;text-transform:uppercase;
+  color:#38bdf8;margin-top:3px;font-weight:700;}
+.p-close{position:absolute;top:46px;right:14px;
+  background:rgba(56,189,248,.12);border:none;color:#38bdf8;
+  width:30px;height:30px;border-radius:50%;font-size:14px;cursor:pointer;}
+.p-body{flex:1;overflow-y:auto;padding:14px 16px 20px;}
+.p-body::-webkit-scrollbar{width:2px;}
+.p-body::-webkit-scrollbar-thumb{background:rgba(56,189,248,.3);border-radius:2px;}
+
+/* ─── PANEL CONTENT CARDS ─── */
+.pc{
+  background:linear-gradient(135deg,rgba(14,165,233,.09),rgba(99,102,241,.09));
+  border:1px solid rgba(56,189,248,.15);border-radius:14px;
+  padding:13px 14px;margin-bottom:9px;
+}
+.pc h4{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;
+  color:#38bdf8;margin-bottom:8px;font-weight:800;}
+.pc p{font-size:13px;font-weight:700;line-height:1.75;color:#e0f2fe;}
+.pc p b{color:#7dd3fc;}
+
+.srv{display:flex;align-items:flex-start;gap:10px;
+  background:rgba(56,189,248,.06);border-radius:12px;
+  padding:11px 13px;margin-bottom:8px;}
+.sico{width:36px;height:36px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:16px;}
+.ica{background:linear-gradient(135deg,#0369a1,#38bdf8);}
+.icb{background:linear-gradient(135deg,#4f46e5,#818cf8);}
+.icc{background:linear-gradient(135deg,#0f766e,#2dd4bf);}
+.icd{background:linear-gradient(135deg,#0284c7,#7dd3fc);}
+.stx{font-size:13px;font-weight:700;color:#e0f2fe;line-height:1.6;}
+.stx b{color:#7dd3fc;display:block;font-weight:800;margin-bottom:1px;}
+
+/* Staff bubbles grid */
+.staff-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.staff-bub{
+  display:flex;flex-direction:column;align-items:center;gap:7px;
+  background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.12);
+  border-radius:14px;padding:14px 10px;cursor:pointer;
+  transition:transform .2s,box-shadow .2s;
+}
+.staff-bub:active{transform:scale(.95);box-shadow:0 0 18px rgba(56,189,248,.3);}
+.staff-photo{
+  width:60px;height:60px;border-radius:50%;
+  background:linear-gradient(135deg,#0369a1,#6366f1);
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;overflow:hidden;position:relative;
+  box-shadow:0 0 14px rgba(56,189,248,.4);
+  flex-shrink:0;
+}
+.staff-photo img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.staff-photo .ini{font-size:22px;font-weight:900;color:#fff;}
+.staff-name{font-size:12px;font-weight:800;color:#fff;text-align:center;line-height:1.3;}
+.staff-role{font-size:9px;letter-spacing:1px;text-transform:uppercase;
+  color:#38bdf8;font-weight:700;text-align:center;}
+.staff-note{font-size:10px;font-weight:600;color:rgba(255,255,255,.45);
+  text-align:center;line-height:1.4;}
+
+/* Fund */
+.fund{display:flex;align-items:center;gap:11px;
+  background:rgba(16,185,129,.08);border:1px solid rgba(52,211,153,.2);
+  border-radius:12px;padding:11px 13px;margin-bottom:8px;}
+.fi{width:40px;height:40px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#065f46,#10b981);
+  display:flex;align-items:center;justify-content:center;font-size:18px;}
+.fa{font-size:15px;font-weight:900;color:#34d399;}
+.fl{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;
+  color:rgba(52,211,153,.7);font-weight:700;margin-bottom:2px;}
+.fn{font-size:11px;font-weight:600;color:rgba(255,255,255,.45);line-height:1.3;}
+
+/* Contact */
+.cb{display:flex;align-items:center;gap:12px;
+  background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.12);
+  border-radius:14px;padding:13px 14px;margin-bottom:8px;
+  text-decoration:none;transition:transform .15s;}
+.cb:active{transform:scale(.97);}
+.cico{width:44px;height:44px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:20px;}
+.iph{background:linear-gradient(135deg,#0369a1,#38bdf8);}
+.ifb{background:linear-gradient(135deg,#1d4ed8,#60a5fa);}
+.imp{background:linear-gradient(135deg,#be123c,#fb7185);}
+.cl{font-size:9px;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(56,189,248,.7);font-weight:700;}
+.cv{font-size:14px;font-weight:800;color:#fff;margin-top:2px;}
+
+.pbox{background:rgba(56,189,248,.05);border:1px solid rgba(56,189,248,.1);
+  border-radius:12px;padding:12px 14px;margin-bottom:8px;}
+.pbox .ph{font-size:9px;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(56,189,248,.6);margin-bottom:7px;font-weight:700;}
+.pbox .pl{font-size:12px;font-weight:700;color:#bae6fd;line-height:1.9;}
+
+/* ─── ABOUT BOTTOM ─── */
+#abt{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:0 12px 8px;
+  opacity:0;transition:opacity .4s;
+}
+#abt.on{opacity:1;}
+.acard{
+  background:linear-gradient(135deg,rgba(14,165,233,.12),rgba(99,102,241,.12));
+  border-radius:16px;padding:13px 16px;position:relative;
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  /* Flip reveal */
+  transform:rotateX(90deg);opacity:0;
+  transition:transform .6s cubic-bezier(.22,1,.36,1),opacity .5s;
+}
+#abt.on .acard{transform:rotateX(0);opacity:1;}
+.acard::before{
+  content:'';position:absolute;inset:0;border-radius:16px;padding:1.5px;
+  background:linear-gradient(135deg,rgba(56,189,248,.5),rgba(129,140,248,.4));
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:destination-out;mask-composite:exclude;pointer-events:none;
+}
+.at{font-size:9px;letter-spacing:3px;text-transform:uppercase;
+  color:#38bdf8;margin-bottom:6px;font-weight:800;}
+.ax{font-size:13px;font-weight:700;line-height:1.75;color:#e0f2fe;}
+.ax b{color:#7dd3fc;}
+</style>
+</head>
+<body>
+
+<canvas id="cv"></canvas>
+<div id="cf"></div>
+
+<!-- SCAN -->
+<div id="scan">
+  <div class="sl">HUMUUN</div>
+  <div class="ss">Independent Living Center</div>
+  <div class="sb"><span></span><div class="sl2"></div></div>
+  <p class="sh">Point at the poster</p>
+</div>
+
+<!-- OVERLAY -->
+<div id="ov">
+<div class="ov-inner" id="ovInner">
+
+  <!-- TOP -->
+  <div id="hdr">
+    <div class="org" id="orgN"></div>
+    <div class="sub" id="sub">Independent Living Center</div>
+    <div class="dvd" id="dvd"></div>
+    <div class="srow" id="srow">
+      <div class="bwrap">
+        <div class="br br1"></div><div class="br br2"></div>
+        <div class="bdg b5" id="b5"><span class="bn">5</span><span class="bt">YEARS<br>SERVICE</span></div>
+      </div>
+      <div class="smid">
+        <div class="st"><span class="sn" id="c0">0</span><span class="sl3">Staff</span></div>
+        <div class="st"><span class="sn" id="c1">0</span><span class="sl3">Provinces</span></div>
+        <div class="st"><span class="sn" id="c2">0</span><span class="sl3">People Served</span></div>
+      </div>
+      <div class="bwrap">
+        <div class="br br1" style="animation-direction:reverse;animation-duration:6s;border-top-color:#818cf8;border-left-color:rgba(129,140,248,.15);"></div>
+        <div class="br br2" style="animation-duration:4s;animation-direction:normal;border-right-color:#6366f1;"></div>
+        <div class="bdg b7" id="b7"><span class="bn">7</span><span class="bt">YEARS<br>FOUNDED</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GLASS PANEL (slides from left/poster) -->
+  <div id="panel">
+    <div class="p-top">
+      <div class="p-title" id="pTitle">About</div>
+      <div class="p-sub" id="pSub">HUMUUN ILC</div>
+      <button class="p-close" onclick="closePanel()">✕</button>
+    </div>
+    <div class="p-body" id="pBody"></div>
+  </div>
+
+  <!-- RIGHT NAV -->
+  <div id="nav">
+    <div class="nb" id="nAbout" onclick="openPanel('about')">
+      <div class="ni ia">ℹ️</div><span class="nt">About</span>
+    </div>
+    <div class="nb" id="nTeam" onclick="openPanel('team')">
+      <div class="ni it">👥</div><span class="nt">Team</span>
+    </div>
+    <div class="nb" id="nContact" onclick="openPanel('contact')">
+      <div class="ni ic">📞</div><span class="nt">Contact</span>
+    </div>
+  </div>
+
+  <!-- ABOUT BOTTOM -->
+  <div id="abt">
+    <div class="acard">
+      <div class="at">About Us</div>
+      <div class="ax">HUMUUN ILC is an NGO founded in <b>2019</b> in Orkhon Province, Mongolia. We champion the rights of persons with disabilities. Expanded to Darkhan-Uul Province in <b>2025</b>.</div>
+    </div>
+  </div>
+
+</div><!-- /ov-inner -->
+</div><!-- /ov -->
+
+<!-- PANEL TEMPLATES -->
+<div id="tpl-about" style="display:none">
+  <div class="pc">
+    <h4>Our Mission</h4>
+    <p>We champion the rights of persons with disabilities, enabling full and equal participation in Mongolian society. Founded <b>2019</b> in Orkhon · Expanded <b>2025</b> to Darkhan-Uul.</p>
+  </div>
+  <div class="srv"><div class="sico ica">🤝</div>
+    <div class="stx"><b>Personal Assistance</b>Supporting people with severe disabilities to live independently in daily life.</div></div>
+  <div class="srv"><div class="sico icb">💬</div>
+    <div class="stx"><b>Counselling & Information</b>Legal and social service guidance. Psychological support to 154+ individuals.</div></div>
+  <div class="srv"><div class="sico icc">📚</div>
+    <div class="stx"><b>Training & Capacity Building</b>Workshops for persons with disabilities, families and the community.</div></div>
+  <div class="srv"><div class="sico icd">📢</div>
+    <div class="stx"><b>Advocacy</b>Influencing policy to protect the rights of persons with disabilities.</div></div>
+</div>
+
+<div id="tpl-team" style="display:none">
+  <div class="pc">
+    <h4>18 Staff · 2 Provinces</h4>
+    <p>Our team of dedicated professionals works across Orkhon and Darkhan-Uul provinces to deliver person-centred support.</p>
+  </div>
+
+  <!-- ★ STAFF BUBBLES — зурагтай болгохдоо src="./team/name.jpg" нэмнэ -->
+  <div class="staff-grid">
+    <div class="staff-bub">
+      <div class="staff-photo">
+        <img src="./team/ganchimeg.jpg" onerror="this.style.display='none'"/>
+        <span class="ini">G</span>
+      </div>
+      <div class="staff-name">P. Ganchimeg</div>
+      <div class="staff-role">Founder · Director</div>
+      <div class="staff-note">Economist & Accountant</div>
+    </div>
+    <div class="staff-bub">
+      <div class="staff-photo" style="background:linear-gradient(135deg,#0ed3e9,#146cb8)">
+        <img src="./team/orkhon.jpg" onerror="this.style.display='none'"/>
+        <span class="ini">O</span>
+      </div>
+      <div class="staff-name">Orkhon Team</div>
+      <div class="staff-role">Personal Assistants</div>
+      <div class="staff-note">8–10 assistants</div>
+    </div>
+    <div class="staff-bub">
+      <div class="staff-photo" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">
+        <img src="./team/darkhan.jpg" onerror="this.style.display='none'"/>
+        <span class="ini">D</span>
+      </div>
+      <div class="staff-name">Darkhan-Uul</div>
+      <div class="staff-role">Branch Team</div>
+      <div class="staff-note">3 assistants · 2025</div>
+    </div>
+    <div class="staff-bub" style="border-color:rgba(52,211,153,.25)">
+      <div class="staff-photo" style="background:linear-gradient(135deg,#065f46,#10b981)">
+        <span class="ini">💰</span>
+      </div>
+      <div class="staff-name">18 Total Staff</div>
+      <div class="staff-role">Two Provinces</div>
+      <div class="staff-note">104.3M + 20M MNT</div>
+    </div>
+  </div>
+
+  <div class="fund"><div class="fi">🏛</div>
+    <div><div class="fl">Orkhon Province · Annual</div>
+      <div class="fa">104.3M MNT</div>
+      <div class="fn">Governor's Office — local budget</div></div></div>
+  <div class="fund"><div class="fi">🌱</div>
+    <div><div class="fl">Darkhan-Uul · Pilot 2025</div>
+      <div class="fa">20M MNT</div>
+      <div class="fn">Governor's Office — 5-month project</div></div></div>
+</div>
+
+<div id="tpl-contact" style="display:none">
+  <a class="cb" href="tel:+97699523330">
+    <div class="cico iph">📞</div>
+    <div><div class="cl">Phone · Mon–Fri 10:00–17:00</div><div class="cv">+976 9952 3330</div></div>
+  </a>
+  <a class="cb" href="https://www.facebook.com/share/17Zr8Smhsw/" target="_blank">
+    <div class="cico ifb">📘</div>
+    <div><div class="cl">Facebook Page</div><div class="cv">HUMUUN ILC</div></div>
+  </a>
+  <a class="cb" href="https://maps.app.goo.gl/eAsFXhcRY3qZ2415A?g_st=afm" target="_blank">
+    <div class="cico imp">📍</div>
+    <div><div class="cl">Location · Orkhon Province</div><div class="cv">View on Map</div></div>
+  </a>
+  <div class="pbox">
+    <div class="ph">Partner Organizations</div>
+    <div class="pl">
+      🏛 Governor's Office — Orkhon Province<br>
+      🏛 Labour & Social Services — Orkhon<br>
+      🏛 Governor's Office — Darkhan-Uul<br>
+      🏛 Darkhan Soum Governor's Office
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     A-FRAME SCENE
+     Layer order (z = depth):
+     0.00  background  — fog pulse
+     0.01  b_cloud     — drift + breathe (WIDE 1.5 overflows)
+     0.02  glass_box   — breathe → scatter at 3s
+     0.03  NGO         — float → scatter at 3s
+     0.04  HUMUUN_ilc  — float → scatter at 3s
+     0.05  icons       — float → scatter at 3s
+     0.07  lens_light  — pulse
+     0.09  f_cloud     — WIDE 1.5, hover (foreground, pops out)
+     birds on CANVAS above HTML
+══════════════════════════════════ -->
+<a-scene
+  mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: no;"
+  color-space="sRGB" renderer="colorManagement: true;"
+  vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+
+  <a-assets>
+    <img id="aBg"    src="./layers/background.png"/>
+    <img id="aBCld"  src="./layers/b_cloud.png"/>
+    <img id="aGlass" src="./layers/glass_box.png"/>
+    <img id="aNGO"   src="./layers/NGO.png"/>
+    <img id="aTitle" src="./layers/HUMUUN_ilc.png"/>
+    <img id="aIcons" src="./layers/icons.png"/>
+    <img id="aLight" src="./layers/lens_light.png"/>
+    <img id="aFCld"  src="./layers/f_cloud.png"/>
+    <img id="aBirds" src="./layers/birds.png"/>
+    <!-- GLB clouds/birds (optional — uncomment when ready):
+    <a-asset-item id="clouds3d" src="./layers/clouds.glb"></a-asset-item>
+    <a-asset-item id="birds3d"  src="./layers/birds.glb"></a-asset-item>
+    -->
+  </a-assets>
+
+  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+  <a-entity mindar-image-target="targetIndex: 0" id="trg">
+
+    <!-- BG: fog pulse -->
+    <a-image id="lBg" src="#aBg" position="0 0 0" width="1" height="1"
+      material="transparent:true; opacity:0;"
+      animation__in="property:material.opacity; to:1; dur:700; easing:easeOutQuad;"
+      animation__fog="property:material.opacity; from:.82; to:1; dur:3800; dir:alternate; loop:true; easing:easeInOutSine; delay:900;">
+    </a-image>
+
+    <!-- B_CLOUD: wide (1.3) — overflows poster left edge, breathe+drift -->
+    <a-image id="lBC" src="#aBCld" position="0 0 0.01" width="1.3" height="1.3"
+      material="blending:additive; transparent:true; opacity:0;"
+      animation__in="property:material.opacity; to:.9; dur:900; delay:100; easing:easeOutQuad;"
+      animation__br="property:scale; from:1 1 1; to:1.04 1.03 1; dur:5500; dir:alternate; loop:true; easing:easeInOutSine; delay:1000;"
+      animation__dr="property:position; from:-0.015 0.01 0.01; to:0.015 -0.01 0.01; dur:9000; dir:alternate; loop:true; easing:easeInOutSine; delay:1000;">
+    </a-image>
+
+    <!-- GLASS BOX: breathe → scatter+fade at 3s via JS -->
+    <a-image id="lGl" src="#aGlass" position="0 0 0.02" width="1" height="1"
+      material="blending:additive; transparent:true; opacity:0;"
+      animation__in="property:material.opacity; to:.88; dur:800; delay:200; easing:easeOutQuad;"
+      animation__br="property:scale; from:1 1 1; to:1.003 1.003 1; dur:4500; dir:alternate; loop:true; easing:easeInOutSine; delay:1000;">
+    </a-image>
+
+    <!-- NGO: rise from below → scatter at 3s -->
+    <a-image id="lNG" src="#aNGO" position="0 0.04 0.03" width="1" height="1"
+      material="blending:additive; transparent:true; opacity:0;"
+      animation__in="property:material.opacity; to:1; dur:600; delay:300; easing:easeOutQuad;"
+      animation__rise="property:position; from:0 0 0.03; to:0 0.04 0.03; dur:600; delay:300; easing:easeOutBack;"
+      animation__fl="property:position; from:0 0.04 0.03; to:0 0.055 0.03; dur:4500; dir:alternate; loop:true; easing:easeInOutSine; delay:1100;">
+    </a-image>
+
+    <!-- HUMUUN_ILC: rise → scatter at 3s -->
+    <a-image id="lTi" src="#aTitle" position="0 -0.04 0.04" width="1" height="1"
+      material="blending:additive; transparent:true; opacity:0;"
+      animation__in="property:material.opacity; to:1; dur:600; delay:400; easing:easeOutQuad;"
+      animation__rise="property:position; from:0 -0.09 0.04; to:0 -0.04 0.04; dur:600; delay:400; easing:easeOutBack;"
+      animation__fl="property:position; from:0 -0.04 0.04; to:0 -0.026 0.04; dur:4000; dir:alternate; loop:true; easing:easeInOutSine; delay:1200;">
+    </a-image>
+
+    <!-- ICONS: from left → scatter at 3s -->
+    <a-image id="lIc" src="#aIcons" position="0 0 0.05" width="1" height="1"
+      material="blending:additive; transparent:true; opacity:0;"
+      animation__in="property:material.opacity; to:.9; dur:600; delay:450; easing:easeOutQuad;"
+      animation__inx="property:position; from:-0.05 0 0.05; to:0 0 0.05; dur:600; delay:450; easing:easeOutBack;"
+      animation__fl="property:position; from:0 0 0.05; to:0 0.01 0.05; dur:3800; dir:alternate; loop:true; easing:easeInOutSine; delay:1200;">
+    </a-image>
+
+    <!-- LENS LIGHT: glow pulse -->
+    <a-image id="lLt" src="#aLight" position="0 0 0.07" width="1" height="1"
+      material="blending:additive; transparent:true; opacity:0;"
+      animation__in="property:material.opacity; to:.8; dur:1000; delay:200; easing:easeOutQuad;"
+      animation__pulse="property:material.opacity; from:.4; to:.85; dur:2000; dir:alternate; loop:true; easing:easeInOutSine; delay:900;">
+    </a-image>
+
+    <!-- F_CLOUD: wide (1.3) overflows right edge, hover, pops toward camera -->
+    <a-image id="lFC" src="#aFCld" position="0 0 0.09" width="1.3" height="1.3"
+      material="blending:additive; transparent:true; opacity:0;"
+      animation__in="property:material.opacity; to:.88; dur:800; delay:350; easing:easeOutQuad;"
+      animation__hov="property:position; from:0 0.01 0.09; to:0 0.03 0.09; dur:3000; dir:alternate; loop:true; easing:easeInOutSine; delay:800;"
+      animation__br="property:scale; from:1 1 1; to:1.02 1.02 1; dur:3000; dir:alternate; loop:true; easing:easeInOutSine; delay:800;">
+    </a-image>
+
+    <!-- Thin decorative ring -->
+    <a-torus radius="0.51" radius-tubular="0.002" color="#38bdf8" opacity="0"
+      position="0 0 0.004"
+      animation__rot="property:rotation; from:0 0 0; to:0 0 360; loop:true; dur:18000; easing:linear;"
+      animation__fade="property:material.opacity; from:0; to:.15; dur:1000; delay:1300;">
+    </a-torus>
+
+    <!-- Optional 3D GLB clouds (uncomment when .glb ready):
+    <a-entity id="clouds3dEl" gltf-model="#clouds3d"
+      position="0 -0.3 0.1" scale="0.5 0.5 0.5"
+      animation-mixer="clip:float; loop:repeat;">
+    </a-entity>
+    <a-entity id="birds3dEl" gltf-model="#birds3d"
+      position="0 0.2 0.12" scale="0.08 0.08 0.08"
+      animation-mixer="clip:fly; loop:repeat;">
+    </a-entity>
+    -->
+
+  </a-entity>
+</a-scene>
+
+<script>
+/* ═══════════════════════════════
+   REFS
+═══════════════════════════════ */
+const scan    = document.getElementById('scan');
+const ov      = document.getElementById('ov');
+const ovInner = document.getElementById('ovInner');
+const cfDiv   = document.getElementById('cf');
+const trg     = document.getElementById('trg');
+const canvas  = document.getElementById('cv');
+const ctx     = canvas.getContext('2d');
+
+/* ═══════════════════════════════
+   CANVAS RESIZE
+═══════════════════════════════ */
+function resizeCv() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCv();
+window.addEventListener('resize', resizeCv);
+
+/* ═══════════════════════════════
+   BUILD TITLE LETTERS
+═══════════════════════════════ */
+'HUMUUN'.split('').forEach(ch => {
+  const s = document.createElement('span');
+  s.className = 'lt';
+  s.textContent = ch;
+  document.getElementById('orgN').appendChild(s);
+});
+
+/* ═══════════════════════════════
+   TOUCH TRAIL
+═══════════════════════════════ */
+let trail = [];
+document.addEventListener('touchmove', e => {
+  const t = e.touches[0];
+  trail.push({x:t.clientX, y:t.clientY, ts:Date.now()});
+  if (trail.length > 80) trail.shift();
+}, {passive:true});
+document.addEventListener('mousemove', e => {
+  if (!e.buttons) return;
+  trail.push({x:e.clientX, y:e.clientY, ts:Date.now()});
+  if (trail.length > 80) trail.shift();
+});
+
+/* ═══════════════════════════════
+   BIRDS — CANVAS (above HTML)
+   Perspective: bottom-right=near=big, top-left=far=small
+   Path: small oval tight around poster center
+═══════════════════════════════ */
+const birdImg = new Image();
+birdImg.src = './layers/birds.png';
+let bAngle   = 0;
+let bActive  = false;
+
+function drawFrame() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Trail
+  const now = Date.now();
+  trail = trail.filter(p => now - p.ts < 650);
+  trail.forEach(p => {
+    const age   = (now - p.ts) / 650;
+    const alpha = (1 - age) * 0.6;
+    const r     = (1 - age) * 13 + 3;
+    const g     = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r);
+    g.addColorStop(0, `rgba(56,189,248,${alpha})`);
+    g.addColorStop(0.5,`rgba(99,102,241,${alpha*.4})`);
+    g.addColorStop(1, 'rgba(99,102,241,0)');
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,r,0,Math.PI*2);
+    ctx.fillStyle = g;
+    ctx.fill();
+  });
+
+  // Birds — tight oval orbit just beyond poster edge
+  if (bActive && birdImg.complete) {
+    bAngle += 0.009; // speed
+
+    // Poster center roughly at screen center
+    const cx = canvas.width  * 0.5;
+    const cy = canvas.height * 0.46;
+
+    // Tight radius — just beyond poster edge (~30% of screen half)
+    const rx = canvas.width  * 0.28;
+    const ry = canvas.height * 0.16;
+
+    const bx = cx + Math.cos(bAngle) * rx;
+    const by = cy + Math.sin(bAngle) * ry;
+
+    // Perspective: normalize position 0..1
+    const nx = bx / canvas.width;   // 0=left, 1=right
+    const ny = by / canvas.height;  // 0=top,  1=bottom
+    const persp = (nx + ny) / 2;    // 0=far(top-left), 1=near(bottom-right)
+
+    // Size: 38px (far, top-left) → 100px (near, bottom-right)
+    const sz = 38 + persp * 62;
+
+    // Flip horizontally based on direction
+    const vx   = -Math.sin(bAngle);
+    const flip = vx > 0 ? 1 : -1;
+
+    // ScaleY flap
+    const flap = 0.72 + Math.abs(Math.sin(bAngle * 9)) * 0.3;
+
+    // Opacity: slightly dimmer when far
+    const opacity = 0.65 + persp * 0.3;
+
+    ctx.save();
+    ctx.translate(bx, by);
+    ctx.scale(flip, flap);
+    ctx.globalAlpha = opacity;
+    ctx.drawImage(birdImg, -sz/2, -sz/2, sz, sz);
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+  requestAnimationFrame(drawFrame);
+}
+drawFrame();
+
+/* ═══════════════════════════════
+   GYROSCOPE — CSS 3D tilt
+═══════════════════════════════ */
+let gx = 0, gy = 0;
+window.addEventListener('deviceorientation', e => {
+  gx = Math.max(-20, Math.min(20, (e.gamma || 0)));
+  gy = Math.max(-10, Math.min(10, (e.beta  || 0) - 45));
+}, true);
+
+function applyGyro() {
+  // CSS 3D tilt on whole overlay — gives parallax feel
+  ovInner.style.transform =
+    `perspective(900px) rotateY(${gx * .35}deg) rotateX(${-gy * .25}deg)`;
+
+  // Also nudge A-Frame layers individually
+  const ids = ['lBC','lGl','lNG','lTi','lIc','lLt','lFC'];
+  const str  = [.005,.008,.011,.013,.015,.017,.020];
+  ids.forEach((id,i) => {
+    const el = document.getElementById(id);
+    if (!el || !el.object3D) return;
+    el.object3D.position.x = -(gx/20) * str[i];
+    el.object3D.position.y =  (gy/10) * str[i];
+  });
+  requestAnimationFrame(applyGyro);
+}
+applyGyro();
+
+/* ═══════════════════════════════
+   LAYER SCATTER after 3 seconds
+═══════════════════════════════ */
+function scatterLayers() {
+  const toScatter = [
+    {id:'lGl', dx: .0,  dy:-.15},
+    {id:'lNG', dx:-.18, dy:-.22},
+    {id:'lTi', dx: .15, dy: .18},
+    {id:'lIc', dx:-.12, dy: .20},
+  ];
+  toScatter.forEach(({id,dx,dy}) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const pos = el.getAttribute('position');
+    const tx  = (pos.x + dx).toFixed(2);
+    const ty  = (pos.y + dy).toFixed(2);
+    el.setAttribute('animation__sct',
+      `property:material.opacity; to:0; dur:900; easing:easeInQuad;`);
+    el.setAttribute('animation__sctpos',
+      `property:position; to:${tx} ${ty} ${pos.z}; dur:900; easing:easeInQuad;`);
+  });
+}
+
+/* ═══════════════════════════════
+   COUNTER
+═══════════════════════════════ */
+function cnt(id, target, sfx, dur) {
+  const el = document.getElementById(id);
+  const t0 = Date.now();
+  function tick() {
+    const p = Math.min((Date.now()-t0)/dur, 1);
+    const e = 1 - Math.pow(1-p, 3);
+    el.textContent = Math.round(e*target) + (p>=1?sfx:'');
+    if (p<1) requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+/* ═══════════════════════════════
+   CONFETTI
+═══════════════════════════════ */
+function confetti() {
+  const colors = ['#38bdf8','#7dd3fc','#818cf8','#c084fc','#34d399','#fbbf24','#f472b6'];
+  const cx = window.innerWidth/2;
+  const cy = window.innerHeight * .28;
+  for(let i=0;i<45;i++){
+    const b=document.createElement('div'); b.className='bst';
+    const a=(i/45)*Math.PI*2, d=55+Math.random()*120;
+    b.style.cssText=`left:${cx}px;top:${cy}px;
+      background:${colors[i%colors.length]};
+      width:${4+Math.random()*7}px;height:${4+Math.random()*7}px;
+      --x:${(Math.cos(a)*d).toFixed(0)}px;--y:${(Math.sin(a)*d-35).toFixed(0)}px;
+      animation:bOut ${.5+Math.random()*.5}s ease-out forwards;
+      animation-delay:${Math.random()*120}ms;`;
+    cfDiv.appendChild(b);
+  }
+  for(let i=0;i<60;i++){
+    const c=document.createElement('div'); c.className='cfp';
+    const w=5+Math.random()*8;
+    c.style.cssText=`left:${Math.random()*100}vw;top:-10px;
+      width:${w}px;height:${5+Math.random()*12}px;
+      background:${colors[i%colors.length]};
+      border-radius:${Math.random()>.5?'50%':'2px'};
+      animation-duration:${1.4+Math.random()*2.5}s;
+      animation-delay:${Math.random()*600}ms;`;
+    cfDiv.appendChild(c);
+  }
+  setTimeout(()=>cfDiv.innerHTML='', 4000);
+}
+
+/* ═══════════════════════════════
+   PANEL
+═══════════════════════════════ */
+const panelTitles = {
+  about:   {t:'About Us',  s:'HUMUUN ILC · NGO'},
+  team:    {t:'Our Team',  s:'18 Staff · 2 Provinces'},
+  contact: {t:'Contact',   s:'Get In Touch'},
+};
+let currentPanel = null;
+
+function openPanel(type) {
+  const tpl = document.getElementById('tpl-'+type);
+  if (!tpl) return;
+  document.getElementById('pBody').innerHTML = tpl.innerHTML;
+  document.getElementById('pTitle').textContent = panelTitles[type].t;
+  document.getElementById('pSub').textContent   = panelTitles[type].s;
+  document.getElementById('panel').classList.add('open');
+  // Highlight active nav
+  ['nAbout','nTeam','nContact'].forEach(id=>document.getElementById(id).classList.remove('act'));
+  const map={about:'nAbout',team:'nTeam',contact:'nContact'};
+  if(map[type]) document.getElementById(map[type]).classList.add('act');
+  currentPanel = type;
+}
+
+function closePanel() {
+  document.getElementById('panel').classList.remove('open');
+  ['nAbout','nTeam','nContact'].forEach(id=>document.getElementById(id).classList.remove('act'));
+  currentPanel = null;
+}
+
+/* ═══════════════════════════════
+   ENTRANCE
+   0ms    layers fade in (A-Frame)
+   150ms  confetti
+   700ms  letters stagger
+   1300ms subtitle
+   1500ms divider
+   1700ms stats+counter
+   1850ms badges
+   2000ms nav buttons
+   2200ms about card
+   3000ms scatter glass/NGO/title/icons
+═══════════════════════════════ */
+function enter() {
+  ov.classList.add('on');
+  bActive = true;
+  setTimeout(confetti, 150);
+
+  document.querySelectorAll('.lt').forEach((l,i)=>
+    setTimeout(()=>l.classList.add('on'), 700 + i*90));
+
+  setTimeout(()=>document.getElementById('sub').classList.add('on'), 1300);
+  setTimeout(()=>document.getElementById('dvd').classList.add('on'), 1500);
+  setTimeout(()=>{
+    document.getElementById('srow').classList.add('on');
+    cnt('c0',18,'',1000);
+    cnt('c1',2,'',700);
+    cnt('c2',154,'+',1400);
+  }, 1700);
+  setTimeout(()=>{
+    document.getElementById('b5').classList.add('on');
+    document.getElementById('b7').classList.add('on');
+  }, 1850);
+  setTimeout(()=>document.getElementById('nav').classList.add('on'), 2000);
+  setTimeout(()=>document.getElementById('abt').classList.add('on'), 2200);
+
+  // Scatter glass/NGO/title/icons after 3s
+  setTimeout(scatterLayers, 3000);
+}
+
+function reset() {
+  ov.classList.remove('on');
+  bActive = false;
+  document.querySelectorAll('.lt').forEach(l=>l.classList.remove('on'));
+  ['sub','dvd','srow','b5','b7','nav','abt'].forEach(id=>
+    document.getElementById(id).classList.remove('on'));
+  ['c0','c1','c2'].forEach(id=>document.getElementById(id).textContent='0');
+  closePanel();
+}
+
+/* ═══════════════════════════════
+   TARGET EVENTS
+═══════════════════════════════ */
+trg.addEventListener('targetFound',()=>{ scan.classList.add('off'); enter(); });
+trg.addEventListener('targetLost', ()=>{ scan.classList.remove('off'); reset(); });
+</script>
+</body>
+</html>
