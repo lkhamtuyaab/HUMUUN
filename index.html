@@ -458,10 +458,10 @@ body{background:#000;overflow:hidden;font-family:'Montserrat',sans-serif;}
      Layer order (z = depth):
      0.00  background  — fog pulse
      0.01  b_cloud     — drift + breathe (WIDE 1.5 overflows)
-     0.02  glass_box   — breathe → scatter at 3s
-     0.03  NGO         — float → scatter at 3s
-     0.04  HUMUUN_ilc  — float → scatter at 3s
-     0.05  icons       — float → scatter at 3s
+     0.03  glass_box   — breathe → scatter at 3s
+     0.04  NGO         — breathe → scatter at 3s
+     0.05  HUMUUN_ilc  — breathe → scatter at 3s
+     0.06  icons       — breathe → scatter at 3s
      0.07  lens_light  — pulse
      0.09  f_cloud     — WIDE 1.5, hover (foreground, pops out)
      birds on CANVAS above HTML
@@ -500,29 +500,29 @@ body{background:#000;overflow:hidden;font-family:'Montserrat',sans-serif;}
 
     <!-- B_CLOUD: wide (1.3) — overflows poster left edge, breathe+drift -->
     <a-image id="lBC" src="#aBCld" position="0 0 0.01" width="1.3" height="1.3"
-      material="blending:additive; transparent:true; opacity:0;"
+      material="blending:additive; transparent:true; opacity:80;"
       animation__in="property:material.opacity; to:.9; dur:900; delay:100; easing:easeOutQuad;"
       animation__br="property:scale; from:1 1 1; to:1.04 1.03 1; dur:5500; dir:alternate; loop:true; easing:easeInOutSine; delay:1000;"
       animation__dr="property:position; from:-0.015 0.01 0.01; to:0.015 -0.01 0.01; dur:9000; dir:alternate; loop:true; easing:easeInOutSine; delay:1000;">
     </a-image>
 
     <!-- GLASS BOX: breathe → scatter+fade at 3s via JS -->
-    <a-image id="lGl" src="#aGlass" position="0 0 0.02" width="1" height="1"
+    <a-image id="lGl" src="#aGlass" position="0 0 0.03" width="1" height="1"
       material="blending:additive; transparent:true; opacity:0;"
       animation__in="property:material.opacity; to:.88; dur:800; delay:200; easing:easeOutQuad;"
       animation__br="property:scale; from:1 1 1; to:1.003 1.003 1; dur:4500; dir:alternate; loop:true; easing:easeInOutSine; delay:1000;">
     </a-image>
 
-    <!-- NGO: rise from below → scatter at 3s -->
-    <a-image id="lNG" src="#aNGO" position="0 0.04 0.03" width="1" height="1"
+    <!-- NGO: scatter at 3s -->
+    <a-image id="lNG" src="#aNGO" position="0 0.04 0.04" width="1" height="1"
       material="blending:additive; transparent:true; opacity:0;"
       animation__in="property:material.opacity; to:1; dur:600; delay:300; easing:easeOutQuad;"
-      animation__rise="property:position; from:0 0 0.03; to:0 0.04 0.03; dur:600; delay:300; easing:easeOutBack;"
-      animation__fl="property:position; from:0 0.04 0.03; to:0 0.055 0.03; dur:4500; dir:alternate; loop:true; easing:easeInOutSine; delay:1100;">
+      animation__rise="property:position; from:0 0 0.04; to:0 0.04 0.04; dur:600; delay:300; easing:easeOutBack;"
+      animation__fl="property:position; from:0 0.04 0.04; to:0 0.04 0.04; dur:4500; dir:alternate; loop:true; easing:easeInOutSine; delay:1100;">
     </a-image>
 
-    <!-- HUMUUN_ILC: rise → scatter at 3s -->
-    <a-image id="lTi" src="#aTitle" position="0 -0.04 0.04" width="1" height="1"
+    <!-- HUMUUN_ILC: scatter at 3s -->
+    <a-image id="lTi" src="#aTitle" position="0 -0.04 0.05" width="1" height="1"
       material="blending:additive; transparent:true; opacity:0;"
       animation__in="property:material.opacity; to:1; dur:600; delay:400; easing:easeOutQuad;"
       animation__rise="property:position; from:0 -0.09 0.04; to:0 -0.04 0.04; dur:600; delay:400; easing:easeOutBack;"
@@ -534,7 +534,7 @@ body{background:#000;overflow:hidden;font-family:'Montserrat',sans-serif;}
       material="blending:additive; transparent:true; opacity:0;"
       animation__in="property:material.opacity; to:.9; dur:600; delay:450; easing:easeOutQuad;"
       animation__inx="property:position; from:-0.05 0 0.05; to:0 0 0.05; dur:600; delay:450; easing:easeOutBack;"
-      animation__fl="property:position; from:0 0 0.05; to:0 0.01 0.05; dur:3800; dir:alternate; loop:true; easing:easeInOutSine; delay:1200;">
+      animation__fl="property:position; from:0 0 0.05; to:0 0.00 0.05; dur:3800; dir:alternate; loop:true; easing:easeInOutSine; delay:1200;">
     </a-image>
 
     <!-- LENS LIGHT: glow pulse -->
@@ -546,7 +546,7 @@ body{background:#000;overflow:hidden;font-family:'Montserrat',sans-serif;}
 
     <!-- F_CLOUD: wide (1.3) overflows right edge, hover, pops toward camera -->
     <a-image id="lFC" src="#aFCld" position="0 0 0.09" width="1.3" height="1.3"
-      material="blending:additive; transparent:true; opacity:0;"
+      material="blending:additive; transparent:true; opacity:;"
       animation__in="property:material.opacity; to:.88; dur:800; delay:350; easing:easeOutQuad;"
       animation__hov="property:position; from:0 0.01 0.09; to:0 0.03 0.09; dur:3000; dir:alternate; loop:true; easing:easeInOutSine; delay:800;"
       animation__br="property:scale; from:1 1 1; to:1.02 1.02 1; dur:3000; dir:alternate; loop:true; easing:easeInOutSine; delay:800;">
@@ -561,11 +561,11 @@ body{background:#000;overflow:hidden;font-family:'Montserrat',sans-serif;}
 
     <!-- Optional 3D GLB clouds (uncomment when .glb ready):
     <a-entity id="clouds3dEl" gltf-model="#clouds3d"
-      position="0 -0.3 0.1" scale="0.5 0.5 0.5"
+      position="0 -0.3 0.1" scale="0.6 0.6 0.6"
       animation-mixer="clip:float; loop:repeat;">
     </a-entity>
     <a-entity id="birds3dEl" gltf-model="#birds3d"
-      position="0 0.2 0.12" scale="0.08 0.08 0.08"
+      position="0 0.2 0.12" scale="0.10 0.10 0.10"
       animation-mixer="clip:fly; loop:repeat;">
     </a-entity>
     -->
