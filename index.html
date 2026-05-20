@@ -118,6 +118,8 @@ body{background:#000;overflow:hidden;font-family:'Montserrat',sans-serif;}
   top: 151px; /* 4 moved up from 50% */
   display:flex;flex-direction:column;gap:10px;
   opacity:0;transition:opacity .4s;
+  z-index: 450;        
+  pointer-events: all; 
 }
 #nav.on{opacity:1;}
 .nb{
@@ -150,6 +152,7 @@ body{background:#000;overflow:hidden;font-family:'Montserrat',sans-serif;}
   /* 5: up to just below the Contact button */
   max-height:48vh;
   z-index:450;
+  pointer-events: all;
   /* 5: gradient, 40% opacity, blur */
   background:linear-gradient(160deg,
     rgba(10,4,40,.40) 0%,
@@ -571,7 +574,7 @@ function drawFrame(){
   });
 
   /* birds — perspective size
-     6: base 0.8, far→near adds 0.5 → range 0.8..1.3 of poster fraction */
+     6: base 0.3, far→near adds 0.5 → range 0.7..1.2 of poster fraction */
   if(bActive && bImg.complete){
     bAngle+=0.009;
     const cx=canvas.width*.5;
@@ -586,7 +589,7 @@ function drawFrame(){
 
     /* 6: base size = 0.8 * posterApproxPx, near adds 0.8 more */
     const posterApprox=Math.min(canvas.width,canvas.height)*0.55;
-    const szBase  = posterApprox * 0.8;  // ~0.8 feel
+    const szBase  = posterApprox * 0.3;  // ~0.3 feel
     const szExtra = posterApprox * 0.5;  // +0.5 feel at near
     const sz = szBase + persp * szExtra;
 
@@ -628,14 +631,14 @@ function applyGyro(){
 }
 applyGyro();
 
-/* SCATTER — slow fade only, no position change (fix 2) */
+/* SCATTER — slow fade out only, no position change (fix 2) */
 function scatterLayers(){
   ['lGl','lNG','lTi','lIc'].forEach(id=>{
     const el=document.getElementById(id);
     if(!el)return;
-    /* slow fade out over 1.5s */
+    /* slow fade out over 2s */
     el.setAttribute('animation__fade2',
-      'property:material.opacity; to:0; dur:1500; easing:easeInOutQuad;');
+      'property:material.opacity; to:0; dur:1500;');
   });
 }
 
