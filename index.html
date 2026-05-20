@@ -115,7 +115,7 @@ body{background:#000;overflow:hidden;font-family:'Montserrat',sans-serif;}
 #nav{
   position:absolute;
   right:10px;
-  top:130px; /* 4 moved up from 50% */
+  top: 150px; /* 4 moved up from 50% */
   display:flex;flex-direction:column;gap:10px;
   opacity:0;transition:opacity .4s;
 }
@@ -148,7 +148,7 @@ body{background:#000;overflow:hidden;font-family:'Montserrat',sans-serif;}
   width:100%;
   max-width:560px;
   /* 5: up to just below the Contact button */
-  max-height:65vh;
+  max-height:50vh;
   z-index:450;
   /* 5: gradient, 40% opacity, blur */
   background:linear-gradient(160deg,
@@ -402,11 +402,11 @@ body{background:#000;overflow:hidden;font-family:'Montserrat',sans-serif;}
     <div class="cico iph">📞</div>
     <div><div class="cl">Phone · Mon–Fri 10:00–17:00</div><div class="cv">+976 9952 3330</div></div>
   </a>
-  <a class="cb" href="https://surl.lt/dxmje" target="_blank">
+  <a class="cb" href="https://www.facebook.com/share/17Zr8Smhsw/" target="_blank">
     <div class="cico ifb">📘</div>
     <div><div class="cl">Facebook Page</div><div class="cv">HUMUUN ILC</div></div>
   </a>
-  <a class="cb" href="https://surl.li/dnxwvx" target="_blank">
+  <a class="cb" href="https://maps.app.goo.gl/eAsFXhcRY3qZ2415A?g_st=afm" target="_blank">
     <div class="cico imp">📍</div>
     <div><div class="cl">Location · Orkhon Province</div><div class="cv">View on Map</div></div>
   </a>
@@ -458,27 +458,25 @@ body{background:#000;overflow:hidden;font-family:'Montserrat',sans-serif;}
       animation__dr="property:position; from:-0.018 0.01 0.01; to:0.018 -0.01 0.01; dur:10000; dir:alternate; loop:true; easing:easeInOutSine; delay:1000;">
     </a-image>
 
-    <!-- 3. Glass box — breathe, SLOW FADE OUT at 3s -->
+    <!-- 3. Glass box — breathe, SLOW FADE OUT at 2.5s -->
     <a-image id="lGl" src="#aGl" position="0 0 0.02" width="1" height="1"
       material="blending:additive; transparent:true; opacity:0;"
       animation__in="property:material.opacity; to:0.88; dur:800; delay:200; easing:easeOutQuad;"
       animation__br="property:scale; from:1 1 1; to:1.003 1.003 1; dur:4500; dir:alternate; loop:true; easing:easeInOutSine; delay:1000;">
     </a-image>
 
-    <!-- 4. NGO text — rise, SLOW FADE at 3s -->
-    <a-image id="lNG" src="#aNGO" position="0 0.04 0.03" width="1" height="1"
+    <!-- 4. NGO text — SLOW FADE OUT at 2s -->
+    <a-image id="lNG" src="#aNGO" position="0 0.02 0.03" width="1" height="1"
       material="blending:additive; transparent:true; opacity:0;"
       animation__in="property:material.opacity; to:1; dur:600; delay:300; easing:easeOutQuad;"
-      animation__rise="property:position; from:0 0 0.03; to:0 0.04 0.03; dur:600; delay:300; easing:easeOutBack;"
-      animation__fl="property:position; from:0 0.04 0.03; to:0 0.055 0.03; dur:4500; dir:alternate; loop:true; easing:easeInOutSine; delay:1100;">
+      animation__fl="property:position; from:0 0.02 0.03; to:0 0.055 0.03; dur:4500; dir:alternate; loop:true; easing:easeInOutSine; delay:1100;">
     </a-image>
 
-    <!-- 5. HUMUUN_ilc — rise, SLOW FADE at 3s -->
-    <a-image id="lTi" src="#aTi" position="0 -0.04 0.04" width="1" height="1"
+    <!-- 5. HUMUUN_ilc — SLOW FADE OUT at 2s -->
+    <a-image id="lTi" src="#aTi" position="0 0.02 0.04" width="1" height="1"
       material="blending:additive; transparent:true; opacity:0;"
       animation__in="property:material.opacity; to:1; dur:600; delay:400; easing:easeOutQuad;"
-      animation__rise="property:position; from:0 -0.09 0.04; to:0 -0.04 0.04; dur:600; delay:400; easing:easeOutBack;"
-      animation__fl="property:position; from:0 -0.04 0.04; to:0 -0.026 0.04; dur:4000; dir:alternate; loop:true; easing:easeInOutSine; delay:1200;">
+      animation__fl="property:position; from:0 0.02 0.04; to:0 -0.026 0.04; dur:4000; dir:alternate; loop:true; easing:easeInOutSine; delay:1200;">
     </a-image>
 
     <!-- 6. Icons — from left, SLOW FADE at 3s -->
@@ -585,10 +583,10 @@ function drawFrame(){
     /* perspective 0=far(top-left) 1=near(bottom-right) */
     const persp=(bx/canvas.width+by/canvas.height)/2;
 
-    /* 6: base size = 0.8 * posterApproxPx, near adds 0.5 more */
+    /* 6: base size = 0.8 * posterApproxPx, near adds 0.8 more */
     const posterApprox=Math.min(canvas.width,canvas.height)*0.55;
-    const szBase  = posterApprox * 0.08;  // ~0.8 feel
-    const szExtra = posterApprox * 0.05;  // +0.5 feel at near
+    const szBase  = posterApprox * 0.14;  // ~0.14 feel
+    const szExtra = posterApprox * 0.08;  // +0.8 feel at near
     const sz = szBase + persp * szExtra;
 
     const vx=(-Math.sin(bAngle));
