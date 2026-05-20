@@ -466,21 +466,21 @@ body{background:#000;overflow:hidden;font-family:'Montserrat',sans-serif;}
     <a-image id="lGl" src="#aGl" position="0 0 0.02" width="1" height="1"
       material="blending:additive; transparent:true; opacity:0;"
       animation__in="property:material.opacity; to:0.88; dur:800; delay:200; easing:easeOutQuad;"
-      animation__br="property:scale; from:1 1 1; to:1.003 1.003 1; dur:4500; dir:alternate; loop:true; easing:easeInOutSine; delay:1000;">
+      animation__br="property:scale; from:1 1 1; to:1.003 1.003 1; dur:4500; dir:alternate; loop:false; delay:1000;">
     </a-image>
 
     <!-- 4. NGO text — SLOW FADE OUT at 2s -->
     <a-image id="lNG" src="#aNGO" position="0 0.02 0.03" width="1" height="1"
       material="blending:additive; transparent:true; opacity:0;"
       animation__in="property:material.opacity; to:1; dur:600; delay:300; easing:easeOutQuad;"
-      animation__fl="property:position; from:0 0.02 0.03; to:0 0.02 0.03; dur:4500; dir:alternate; loop:false; easing:easeInOutSine; delay:1100;">
+      animation__fl="property:position; from:0 0.02 0.03; to:0 0.02 0.03; dur:4500; dir:alternate; loop:false; delay:1100;">
     </a-image>
 
     <!-- 5. HUMUUN_ilc — SLOW FADE OUT at 2s -->
     <a-image id="lTi" src="#aTi" position="0 0.02 0.04" width="1" height="1"
       material="blending:additive; transparent:true; opacity:0;"
       animation__in="property:material.opacity; to:1; dur:600; delay:400; easing:easeOutQuad;"
-      animation__fl="property:position; from:0 0.02 0.04; to:0 0.02 0.04; dur:4000; dir:alternate; loop:false; easing:easeInOutSine; delay:1200;">
+      animation__fl="property:position; from:0 0.02 0.04; to:0 0.02 0.04; dur:4000; dir:alternate; loop:false; delay:1200;">
     </a-image>
 
     <!-- 6. Icons — from left, SLOW FADE at 3s -->
@@ -488,7 +488,7 @@ body{background:#000;overflow:hidden;font-family:'Montserrat',sans-serif;}
       material="blending:additive; transparent:true; opacity:0;"
       animation__in="property:material.opacity; to:0.9; dur:600; delay:450; easing:easeOutQuad;"
       animation__inx="property:position; from:-0.05 0 0.05; to:0 0 0.05; dur:600; delay:450; easing:easeOutBack;"
-      animation__fl="property:position; from:0 0 0.05; to:0 0 0.05; dur:3800; dir:alternate; loop:false; easing:easeInOutSine; delay:1200;">
+      animation__fl="property:position; from:0 0 0.05; to:0 0 0.05; dur:3800; dir:alternate; loop:false; delay:1200;">
     </a-image>
 
     <!-- 7. Lens light — glow pulse -->
@@ -503,7 +503,7 @@ body{background:#000;overflow:hidden;font-family:'Montserrat',sans-serif;}
       material="blending:additive; transparent:true; opacity:0;"
       animation__in="property:material.opacity; to:0.88; dur:800; delay:350; easing:easeOutQuad;"
       animation__hov="property:position; from:0 0.01 0.09; to:0 0.03 0.09; dur:3200; dir:alternate; loop:true; easing:easeInOutSine; delay:800;"
-      animation__br="property:scale; from:1 1 1; to:1.033 1.033 1; dur:3200; dir:alternate; loop:true; easing:easeInOutSine; delay:800;">
+      animation__br="property:scale; from:1 1 1; to:1.044 1.044 1; dur:3200; dir:alternate; loop:true; easing:easeInOutSine; delay:800;">
     </a-image>
 
     <!-- Thin ring -->
@@ -587,7 +587,7 @@ function drawFrame(){
     /* perspective 0=far(top-left) 1=near(bottom-right) */
     const persp=(bx/canvas.width+by/canvas.height)/2;
 
-    /* 6: base size = 0.8 * posterApproxPx, near adds 0.8 more */
+    /* 6: base size = 0.3 * posterApproxPx, near adds 0.5 more */
     const posterApprox=Math.min(canvas.width,canvas.height)*0.55;
     const szBase  = posterApprox * 0.3;  // ~0.3 feel
     const szExtra = posterApprox * 0.5;  // +0.5 feel at near
